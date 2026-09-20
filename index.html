@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Autonomous Wireless Drone Charging Pad | Telemetry</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen p-6 font-mono">
@@ -15,53 +15,52 @@
       <div>
         <div class="flex items-center gap-2 text-sky-400 text-xs mb-1">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-          <span>ESP-NOW Telemetry Link Active</span>
+          <span id="link-status">ESP-NOW Telemetry & GPS Navigation Link Active</span>
         </div>
         <h1 class="text-2xl font-bold tracking-wider">Wireless Drone Charging Pad</h1>
       </div>
-      <a href="https://github.com/04-Sai/Autonomous-Smart-Wireless-Drone-Charging-Pad" target="_blank" 
-         class="mt-4 md:mt-0 px-4 py-2 bg-sky-500/10 border border-sky-500/30 hover:bg-sky-500 hover:text-white text-sky-400 text-xs rounded-xl transition-all">
-        View Repository
-      </a>
+      <button onclick="toggleDockState()" id="dock-toggle-btn" class="mt-4 md:mt-0 px-4 py-2 bg-sky-500/10 border border-sky-500/30 hover:bg-sky-500 hover:text-white text-sky-400 text-xs rounded-xl transition-all cursor-pointer">
+        Simulate Undock / Flight
+      </button>
     </div>
 
     <!-- Metrics Grid -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
       <div class="p-5 bg-slate-900/60 border border-sky-500/20 rounded-xl">
+        <p class="text-xs text-slate-400">Drone Battery & Threshold</p>
+        <p id="battery-val" class="text-3xl font-bold text-emerald-400 mt-2">85%</p>
+        <span id="battery-sub" class="text-[10px] text-sky-400 mt-1 block">● Target Threshold: 20% (Auto-Dock)</span>
+      </div>
+      <div class="p-5 bg-slate-900/60 border border-sky-500/20 rounded-xl">
+        <p class="text-xs text-slate-400">GPS Auto-Dock Status</p>
+        <p id="dock-val" class="text-3xl font-bold text-sky-400 mt-2">LOCKED</p>
+        <span id="dock-sub" class="text-[10px] text-emerald-400 mt-1 block">● Pad Coordinates Matched</span>
+      </div>
+      <div class="p-5 bg-slate-900/60 border border-sky-500/20 rounded-xl">
         <p class="text-xs text-slate-400">Inductive Power Transfer</p>
-        <p class="text-3xl font-bold text-sky-400 mt-2">15.4 W</p>
-        <span class="text-[10px] text-emerald-400 mt-1 block">● Coupling Efficiency: 92%</span>
-      </div>
-      <div class="p-5 bg-slate-900/60 border border-sky-500/20 rounded-xl">
-        <p class="text-xs text-slate-400">Transmitter / Rx Status</p>
-        <p class="text-3xl font-bold text-emerald-400 mt-2">DOCKED</p>
-        <span class="text-[10px] text-sky-400 mt-1 block">● ESP32 Node Connected</span>
-      </div>
-      <div class="p-5 bg-slate-900/60 border border-sky-500/20 rounded-xl">
-        <p class="text-xs text-slate-400">Pad Temperature</p>
-        <p class="text-3xl font-bold text-blue-400 mt-2">34.8 °C</p>
-        <span class="text-[10px] text-emerald-400 mt-1 block">● Normal Thermal Range</span>
+        <p id="power-val" class="text-3xl font-bold text-blue-400 mt-2">15.4 W</p>
+        <span id="power-sub" class="text-[10px] text-emerald-400 mt-1 block">● Charging Active</span>
       </div>
     </div>
 
     <!-- Live Event Log -->
     <div class="p-6 bg-slate-900/60 border border-sky-500/20 rounded-xl space-y-4">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <span class="text-sm font-bold text-slate-300">ESP32 Hardware Event Stream</span>
+        <span class="text-sm font-bold text-slate-300">ESP32 & GPS Autonomous Event Stream</span>
         <span class="text-xs text-sky-400">Live Feed</span>
       </div>
-      <div class="space-y-2 text-xs text-slate-400 font-mono">
+      <div id="event-log" class="space-y-2 text-xs text-slate-400 font-mono">
         <div class="p-2.5 bg-slate-950/80 rounded border border-slate-800/80 flex justify-between">
-          <span class="text-emerald-400">[INFO] Inductive resonance locked successfully on receiver coil.</span>
+          <span class="text-emerald-400">[AUTO-DOCK] Drone landed on pad; alignment verified via ESP32. Inductive charging initiated.</span>
           <span class="text-slate-500">Just now</span>
         </div>
         <div class="p-2.5 bg-slate-950/80 rounded border border-slate-800/80 flex justify-between">
-          <span class="text-blue-400">[ESP-NOW] Telemetry packet broadcast acknowledged by Master Node.</span>
-          <span class="text-slate-500">3s ago</span>
+          <span class="text-blue-400">[GPS] Battery threshold low trigger reached; drone searched for pad coordinates and routed home.</span>
+          <span class="text-slate-500">2m ago</span>
         </div>
         <div class="p-2.5 bg-slate-950/80 rounded border border-slate-800/80 flex justify-between">
-          <span class="text-sky-400">[POWER] Charging sequence initiated at 12V baseline.</span>
-          <span class="text-slate-500">10s ago</span>
+          <span class="text-sky-400">[MISSION] Autonomous flight cycle completed. Resuming mission queue post-charge.</span>
+          <span class="text-slate-500">5m ago</span>
         </div>
       </div>
     </div>
@@ -69,7 +68,50 @@
   </div>
 
   <script>
-    lucide.createIcons();
+    let isDocked = true;
+    function toggleDockState() {
+      isDocked = !isDocked;
+      const batteryEl = document.getElementById('battery-val');
+      const dockEl = document.getElementById('dock-val');
+      const dockSub = document.getElementById('dock-sub');
+      const powerEl = document.getElementById('power-val');
+      const powerSub = document.getElementById('power-sub');
+      const eventLog = document.getElementById('event-log');
+      
+      const timeStr = new Date().toLocaleTimeString();
+
+      if (!isDocked) {
+        batteryEl.innerText = "42%";
+        batteryEl.className = "text-3xl font-bold text-amber-400 mt-2";
+        dockEl.innerText = "IN FLIGHT";
+        dockEl.className = "text-3xl font-bold text-amber-400 mt-2";
+        dockSub.innerText = "● Searching Pad GPS Coordinates";
+        powerEl.innerText = "0.0 W";
+        powerSub.innerText = "● On Battery Power";
+        
+        eventLog.insertAdjacentHTML('afterbegin', `
+          <div class="p-2.5 bg-slate-950/80 rounded border border-slate-800/80 flex justify-between">
+            <span class="text-amber-400">[FLIGHT] Drone undocked from pad. Executing autonomous flight path.</span>
+            <span class="text-slate-500">${timeStr}</span>
+          </div>
+        `);
+      } else {
+        batteryEl.innerText = "95%";
+        batteryEl.className = "text-3xl font-bold text-emerald-400 mt-2";
+        dockEl.innerText = "LOCKED";
+        dockEl.className = "text-3xl font-bold text-sky-400 mt-2";
+        dockSub.innerText = "● Pad Coordinates Matched";
+        powerEl.innerText = "15.4 W";
+        powerSub.innerText = "● Charging Active";
+        
+        eventLog.insertAdjacentHTML('afterbegin', `
+          <div class="p-2.5 bg-slate-950/80 rounded border border-slate-800/80 flex justify-between">
+            <span class="text-emerald-400">[AUTO-DOCK] Threshold reached / Return-to-Home triggered. GPS guided landing successful.</span>
+            <span class="text-slate-500">${timeStr}</span>
+          </div>
+        `);
+      }
+    }
   </script>
 </body>
 </html>
