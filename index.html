@@ -14,13 +14,13 @@
     <div class="flex flex-col md:flex-row items-start md:items-center justify-between p-6 bg-slate-900/80 border border-sky-500/30 rounded-2xl backdrop-blur-md shadow-xl">
       <div>
         <div class="flex items-center gap-2 text-sky-400 text-xs mb-1">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+          <span id="status-dot" class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
           <span id="link-status">ESP-NOW Telemetry & GPS Navigation Link Active</span>
         </div>
         <h1 class="text-2xl font-bold tracking-wider">Wireless Drone Charging Pad</h1>
       </div>
-      <button onclick="toggleDockState()" id="dock-toggle-btn" class="mt-4 md:mt-0 px-4 py-2 bg-sky-500/10 border border-sky-500/30 hover:bg-sky-500 hover:text-white text-sky-400 text-xs rounded-xl transition-all cursor-pointer">
-        Simulate Undock / Flight
+      <button onclick="triggerSimulation()" id="sim-btn" class="mt-4 md:mt-0 px-4 py-2 bg-sky-500/10 border border-sky-500/30 hover:bg-sky-500 hover:text-white text-sky-400 text-xs rounded-xl transition-all cursor-pointer">
+        Simulate Flight & Auto-Dock
       </button>
     </div>
 
@@ -54,63 +54,101 @@
           <span class="text-emerald-400">[AUTO-DOCK] Drone landed on pad; alignment verified via ESP32. Inductive charging initiated.</span>
           <span class="text-slate-500">Just now</span>
         </div>
-        <div class="p-2.5 bg-slate-950/80 rounded border border-slate-800/80 flex justify-between">
-          <span class="text-blue-400">[GPS] Battery threshold low trigger reached; drone searched for pad coordinates and routed home.</span>
-          <span class="text-slate-500">2m ago</span>
-        </div>
-        <div class="p-2.5 bg-slate-950/80 rounded border border-slate-800/80 flex justify-between">
-          <span class="text-sky-400">[MISSION] Autonomous flight cycle completed. Resuming mission queue post-charge.</span>
-          <span class="text-slate-500">5m ago</span>
-        </div>
       </div>
     </div>
 
   </div>
 
   <script>
-    let isDocked = true;
-    function toggleDockState() {
-      isDocked = !isDocked;
+    let isRunning = false;
+
+    function triggerSimulation() {
+      if (isRunning) return;
+      isRunning = true;
+      
+      const btn = document.getElementById('sim-btn');
       const batteryEl = document.getElementById('battery-val');
+      const batterySub = document.getElementById('battery-sub');
       const dockEl = document.getElementById('dock-val');
       const dockSub = document.getElementById('dock-sub');
       const powerEl = document.getElementById('power-val');
       const powerSub = document.getElementById('power-sub');
       const eventLog = document.getElementById('event-log');
+      const linkStatus = document.getElementById('link-status');
       
-      const timeStr = new Date().toLocaleTimeString();
+      btn.disabled = true;
+      btn.classList.add('opacity-50', 'cursor-not-allowed');
 
-      if (!isDocked) {
-        batteryEl.innerText = "42%";
-        batteryEl.className = "text-3xl font-bold text-amber-400 mt-2";
-        dockEl.innerText = "IN FLIGHT";
-        dockEl.className = "text-3xl font-bold text-amber-400 mt-2";
-        dockSub.innerText = "● Searching Pad GPS Coordinates";
-        powerEl.innerText = "0.0 W";
-        powerSub.innerText = "● On Battery Power";
-        
+      const timeStr = () => new Date().toLocaleTimeString();
+
+      // Step 1: Drone Undocks & Flies
+      batteryEl.innerText = "42%";
+      batteryEl.className = "text-3xl font-bold text-amber-400 mt-2";
+      dockEl.innerText = "IN FLIGHT";
+      dockEl.className = "text-3xl font-bold text-amber-400 mt-2";
+      dockSub.innerText = "● Mission Active (Searching GPS Pad)";
+      powerEl.innerText = "0.0 W";
+      powerSub.innerText = "● On Battery Power";
+      linkStatus.innerText = "Drone Airborne - Telemetry Active";
+
+      eventLog.insertAdjacentHTML('afterbegin', `
+        <div class="p-2.5 bg-slate-950/80 rounded border border-slate-800/80 flex justify-between">
+          <span class="text-amber-400">[FLIGHT] Drone undocked. Executing patrol mission route.</span>
+          <span class="text-slate-500">${timeStr()}</span>
+        </div>
+      `);
+
+      // Step 2: Hit Threshold (20%) after 3 seconds
+      setTimeout(() => {
+        batteryEl.innerText = "20%";
+        batteryEl.className = "text-3xl font-bold text-rose-500 mt-2 animate-pulse";
+        batterySub.innerText = "● Low Battery Threshold Reached!";
+
         eventLog.insertAdjacentHTML('afterbegin', `
           <div class="p-2.5 bg-slate-950/80 rounded border border-slate-800/80 flex justify-between">
-            <span class="text-amber-400">[FLIGHT] Drone undocked from pad. Executing autonomous flight path.</span>
-            <span class="text-slate-500">${timeStr}</span>
+            <span class="text-rose-400">[GPS ALERT] Battery dropped to 20% threshold. Initiating Return-to-Home sequence...</span>
+            <span class="text-slate-500">${timeStr()}</span>
           </div>
         `);
-      } else {
-        batteryEl.innerText = "95%";
+      }, 3000);
+
+      // Step 3: 2-Second Loading / Alignment State
+      setTimeout(() => {
+        dockEl.innerText = "ALIGNING...";
+        dockEl.className = "text-3xl font-bold text-yellow-400 mt-2 animate-pulse";
+        dockSub.innerText = "● Precision GPS & Coil Alignment";
+
+        eventLog.insertAdjacentHTML('afterbegin', `
+          <div class="p-2.5 bg-slate-950/80 rounded border border-slate-800/80 flex justify-between">
+            <span class="text-yellow-400">[ALIGNMENT] Drone overhead pad. Locking inductive coupling coordinates (2s buffer)...</span>
+            <span class="text-slate-500">${timeStr()}</span>
+          </div>
+        `);
+      }, 5500);
+
+      // Step 4: Starts Charging
+      setTimeout(() => {
+        batteryEl.innerText = "85%";
         batteryEl.className = "text-3xl font-bold text-emerald-400 mt-2";
+        batterySub.innerText = "● Target Threshold: 20% (Auto-Dock)";
         dockEl.innerText = "LOCKED";
         dockEl.className = "text-3xl font-bold text-sky-400 mt-2";
         dockSub.innerText = "● Pad Coordinates Matched";
         powerEl.innerText = "15.4 W";
         powerSub.innerText = "● Charging Active";
-        
+        linkStatus.innerText = "ESP-NOW Telemetry & GPS Navigation Link Active";
+
         eventLog.insertAdjacentHTML('afterbegin', `
           <div class="p-2.5 bg-slate-950/80 rounded border border-slate-800/80 flex justify-between">
-            <span class="text-emerald-400">[AUTO-DOCK] Threshold reached / Return-to-Home triggered. GPS guided landing successful.</span>
-            <span class="text-slate-500">${timeStr}</span>
+            <span class="text-emerald-400">[CHARGING] Successfully docked! Inductive power transmission started at 15.4W.</span>
+            <span class="text-slate-500">${timeStr()}</span>
           </div>
         `);
-      }
+
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        isRunning = false;
+      }, 7500);
     }
   </script>
 </body>
