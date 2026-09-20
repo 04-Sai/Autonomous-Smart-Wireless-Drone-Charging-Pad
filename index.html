@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Autonomous Wireless Drone Charging Pad | Telemetry</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen p-6 font-mono">
+  <div class="max-w-4xl mx-auto space-y-6">
+    
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between p-6 bg-slate-900/80 border border-sky-500/30 rounded-2xl backdrop-blur-md shadow-xl">
+      <div>
+        <div class="flex items-center gap-2 text-sky-400 text-xs mb-1">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+          <span>ESP-NOW Telemetry Link Active</span>
+        </div>
+        <h1 class="text-2xl font-bold tracking-wider">Wireless Drone Charging Pad</h1>
+      </div>
+      <a href="https://github.com/04-Sai/Autonomous-Smart-Wireless-Drone-Charging-Pad" target="_blank" 
+         class="mt-4 md:mt-0 px-4 py-2 bg-sky-500/10 border border-sky-500/30 hover:bg-sky-500 hover:text-white text-sky-400 text-xs rounded-xl transition-all">
+        View Repository
+      </a>
+    </div>
+
+    <!-- Metrics Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="p-5 bg-slate-900/60 border border-sky-500/20 rounded-xl">
+        <p class="text-xs text-slate-400">Inductive Power Transfer</p>
+        <p class="text-3xl font-bold text-sky-400 mt-2">15.4 W</p>
+        <span class="text-[10px] text-emerald-400 mt-1 block">● Coupling Efficiency: 92%</span>
+      </div>
+      <div class="p-5 bg-slate-900/60 border border-sky-500/20 rounded-xl">
+        <p class="text-xs text-slate-400">Transmitter / Rx Status</p>
+        <p class="text-3xl font-bold text-emerald-400 mt-2">DOCKED</p>
+        <span class="text-[10px] text-sky-400 mt-1 block">● ESP32 Node Connected</span>
+      </div>
+      <div class="p-5 bg-slate-900/60 border border-sky-500/20 rounded-xl">
+        <p class="text-xs text-slate-400">Pad Temperature</p>
+        <p class="text-3xl font-bold text-blue-400 mt-2">34.8 °C</p>
+        <span class="text-[10px] text-emerald-400 mt-1 block">● Normal Thermal Range</span>
+      </div>
+    </div>
+
+    <!-- Live Event Log -->
+    <div class="p-6 bg-slate-900/60 border border-sky-500/20 rounded-xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <span class="text-sm font-bold text-slate-300">ESP32 Hardware Event Stream</span>
+        <span class="text-xs text-sky-400">Live Feed</span>
+      </div>
+      <div class="space-y-2 text-xs text-slate-400 font-mono">
+        <div class="p-2.5 bg-slate-950/80 rounded border border-slate-800/80 flex justify-between">
+          <span class="text-emerald-400">[INFO] Inductive resonance locked successfully on receiver coil.</span>
+          <span class="text-slate-500">Just now</span>
+        </div>
+        <div class="p-2.5 bg-slate-950/80 rounded border border-slate-800/80 flex justify-between">
+          <span class="text-blue-400">[ESP-NOW] Telemetry packet broadcast acknowledged by Master Node.</span>
+          <span class="text-slate-500">3s ago</span>
+        </div>
+        <div class="p-2.5 bg-slate-950/80 rounded border border-slate-800/80 flex justify-between">
+          <span class="text-sky-400">[POWER] Charging sequence initiated at 12V baseline.</span>
+          <span class="text-slate-500">10s ago</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>
